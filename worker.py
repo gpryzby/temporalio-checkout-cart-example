@@ -5,7 +5,7 @@ import asyncio
 from temporalio.worker import Worker
 from temporalio.client import Client
 from workflow import OrderProcessingWorkflow
-from activities import reserve_inventory, charge_customer, pack_and_ship_package, notify_customer
+from activities import reserve_inventory, release_inventory, charge_customer, pack_and_ship_package, notify_customer
 
 async def main():
     """Main function to start the Temporalio worker."""
@@ -19,6 +19,7 @@ async def main():
         workflows=[OrderProcessingWorkflow],
         activities=[
             reserve_inventory,
+            release_inventory,
             charge_customer,
             pack_and_ship_package,
             notify_customer,

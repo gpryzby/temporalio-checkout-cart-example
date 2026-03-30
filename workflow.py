@@ -2,7 +2,7 @@ from datetime import timedelta
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 from shared import OrderInfo
-from activities import reserve_inventory, charge_customer, pack_and_ship_package, notify_customer
+from activities import reserve_inventory, release_inventory, charge_customer, pack_and_ship_package, notify_customer
 
 @workflow.defn
 class OrderProcessingWorkflow:
@@ -29,14 +29,18 @@ class OrderProcessingWorkflow:
                 charge_customer,
                 order_info,
                 start_to_close_timeout=timedelta(seconds=10),
-                # ApplicationError should cause workflow to fail immediately
-                # Configure no retries for this activity
+                # Configure no retries for this activity ONLY for the similation. This can be updated to try multiple times in a real application.
                 retry_policy=RetryPolicy(
                     maximum_attempts=1,
                     )
                 )
         except Exception as e:
-            # If charge fails, the workflow should exit
+            # If charge fails, the workflow releases inventory and reaises the exception to fail the workflow
+            await workflow.execute_activity(
+                release_inventory,
+                order_info,
+                start_to_close_timeout=timedelta(seconds=3)
+            )
             print(f"Workflow failed due to charge error: {e}")
             # Re-raise the exception to fail the workflow
             raise
