@@ -1,17 +1,29 @@
+import random
+from shared import OrderInfo
 from datetime import timedelta
 from temporalio import activity
-from shared import OrderInfo
+from temporalio.exceptions import ActivityError, ApplicationError
 
 @activity.defn(name="reserve_inventory")
 async def reserve_inventory(order_info: OrderInfo) -> str:
     """Reserve inventory for the order."""
-    print(f"reserve_inventory complete for order {order_info.order_id}")
+    print(f"reserve_inventory complete for order {order_info.order_id}")   
     return f"Inventory reserved for order {order_info.order_id}"
 
 
 @activity.defn(name="charge_customer")
 async def charge_customer(order_info: OrderInfo) -> str:
     """Charge the customer for the order."""
+    
+    # Simulate a random failure to demonstrate rollback
+    result = random.choice([True, False])
+
+    if not result:
+        raise ApplicationError(
+            "Charge denied. Order canceled.",
+            type="ChargeDenied",
+            non_retryable=True
+            )
     print(f"charge_customer complete for order {order_info.order_id}")
     return f"Customer charged for order {order_info.order_id}"
 

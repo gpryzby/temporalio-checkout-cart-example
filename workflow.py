@@ -1,5 +1,6 @@
 from datetime import timedelta
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 from shared import OrderInfo
 from activities import reserve_inventory, charge_customer, pack_and_ship_package, notify_customer
 
@@ -15,23 +16,34 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             reserve_inventory,
             order_info,
-            start_to_close_timeout=timedelta(seconds=10)
+            start_to_close_timeout=timedelta(seconds=3)
         )
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
         print(f"Sleep to allow canceling workflow to test durability before charging customer")
-        await workflow.sleep(timedelta(seconds=15))
+        await workflow.sleep(timedelta(seconds=3))
 
         # Step 2: Charge customer
-        await workflow.execute_activity(
-            charge_customer,
-            order_info,
-            start_to_close_timeout=timedelta(seconds=30)
-        )
+        try:
+            await workflow.execute_activity(
+                charge_customer,
+                order_info,
+                start_to_close_timeout=timedelta(seconds=10),
+                # ApplicationError should cause workflow to fail immediately
+                # Configure no retries for this activity
+                retry_policy=RetryPolicy(
+                    maximum_attempts=1,
+                    )
+                )
+        except Exception as e:
+            # If charge fails, the workflow should exit
+            print(f"Workflow failed due to charge error: {e}")
+            # Re-raise the exception to fail the workflow
+            raise
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
         print(f"Sleep to allow canceling workflow to test durability before packing and shipping package")
-        await workflow.sleep(timedelta(seconds=15))
+        await workflow.sleep(timedelta(seconds=3))
         
         # Step 3: Pack and ship package
         await workflow.execute_activity(
@@ -42,7 +54,7 @@ class OrderProcessingWorkflow:
         
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
         print(f"Sleep to allow canceling workflow to test durability before notifying customer")
-        await workflow.sleep(timedelta(seconds=15))
+        await workflow.sleep(timedelta(seconds=3))
 
         # Step 4: Notify customer
         await workflow.execute_activity(
