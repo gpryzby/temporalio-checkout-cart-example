@@ -45,7 +45,15 @@ The solution consists of the following components:
    ```bash
    pip install -r requirements.txt (prepend uv if Debian based distros)
    ```
-5. Start the workflow:
+5. Start docker instance:
+   ``` bash
+   docker run --rm -p 7233:7233 -p 8233:8233 temporalio/temporal:latest server start-dev --ip 0.0.0.0
+   ```
+6. Start worker:
+   ``` bash
+   python3 worker.py
+   ```
+7. Start the workflow:
    ```bash
    python starter.py <order_id>
    ```
