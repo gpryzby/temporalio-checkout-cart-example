@@ -1,6 +1,7 @@
 from datetime import timedelta
 from temporalio import workflow
 from temporalio.common import RetryPolicy
+from temporalio.exceptions import ActivityError, ApplicationError
 from shared import OrderInfo
 from activities import reserve_inventory, release_inventory, charge_customer, pack_and_ship_package, notify_customer
 
@@ -20,7 +21,6 @@ class OrderProcessingWorkflow:
         )
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
-        print(f"Sleep to allow canceling workflow to test durability before charging customer")
         await workflow.sleep(timedelta(seconds=3))
 
         # Step 2: Charge customer
@@ -34,19 +34,17 @@ class OrderProcessingWorkflow:
                     maximum_attempts=1,
                     )
                 )
-        except Exception as e:
-            # If charge fails, the workflow releases inventory and reaises the exception to fail the workflow
+        except ActivityError as e:
+            # If charge fails, the workflow releases inventory and handles the error gracefully
             await workflow.execute_activity(
                 release_inventory,
                 order_info,
                 start_to_close_timeout=timedelta(seconds=3)
             )
-            print(f"Workflow failed due to charge error: {e}")
-            # Re-raise the exception to fail the workflow
-            raise
+            # Re-raise the ApplicationError to fail the workflow but with cleaner error handling
+            raise ApplicationError(f"Order failed: {e.cause}")
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
-        print(f"Sleep to allow canceling workflow to test durability before packing and shipping package")
         await workflow.sleep(timedelta(seconds=3))
         
         # Step 3: Pack and ship package
@@ -57,7 +55,6 @@ class OrderProcessingWorkflow:
         )
         
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
-        print(f"Sleep to allow canceling workflow to test durability before notifying customer")
         await workflow.sleep(timedelta(seconds=3))
 
         # Step 4: Notify customer

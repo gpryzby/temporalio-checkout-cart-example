@@ -4,7 +4,8 @@
 import asyncio
 import sys
 from datetime import timedelta
-from temporalio.client import Client
+from temporalio.client import Client,  WorkflowFailureError
+from temporalio.exceptions import ActivityError, ApplicationError
 
 # Import our workflow and dataclass
 from workflow import OrderProcessingWorkflow
@@ -37,25 +38,24 @@ async def main():
     print(f"Starting workflow for order {order_id}")
     
     try:
-       # Run the workflow
-       result = await client.start_workflow(
-           OrderProcessingWorkflow.run,
-           order_info,
-           id=workflow_id,
-           task_queue=task_queue,
-       )
+        # Run the workflow
+        result = await client.start_workflow(
+            OrderProcessingWorkflow.run,
+            order_info,
+            id=workflow_id,
+            task_queue=task_queue,
+        )
+        print(f"Workflow started successfully. Workflow ID: {workflow_id}")
+        print("Waiting for workflow completion...")
        
-       print(f"Workflow started successfully. Workflow ID: {workflow_id}")
-       print("Waiting for workflow completion...")
-       
-       # Wait for workflow completion
-       workflow_result = await client.get_workflow_handle(workflow_id).result()
-       print(f"Workflow completed with result: {workflow_result}")
-       
-    except Exception as e:
-       print(f"Workflow failed: {e}")
-       # This is the expected behavior when ApplicationError is raised
-       sys.exit(1)
+        # Wait for workflow completion
+        workflow_result = await client.get_workflow_handle(workflow_id).result()
+        print(f"Workflow completed with result: {workflow_result}")
+
+    except WorkflowFailureError as e:
+        print(f"Error: {e.cause}")
+        sys.exit(1)
+           
 
 if __name__ == "__main__":
     asyncio.run(main())

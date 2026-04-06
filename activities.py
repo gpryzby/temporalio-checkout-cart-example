@@ -30,7 +30,7 @@ async def charge_customer(order_info: OrderInfo) -> str:
             "Charge denied. Order canceled.",
             type="ChargeDenied",
             non_retryable=True
-            )
+        )
     print(f"charge_customer complete for order {order_info.order_id}")
     return f"Customer charged for order {order_info.order_id}"
 
