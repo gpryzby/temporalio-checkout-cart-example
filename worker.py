@@ -2,6 +2,7 @@
 """Worker script to run the Temporalio workflow worker."""
 
 import asyncio
+import logging
 from temporalio.worker import Worker
 from temporalio.client import Client
 from workflow import OrderProcessingWorkflow
@@ -9,6 +10,8 @@ from activities import reserve_inventory, release_inventory, charge_customer, pa
 
 async def main():
     """Main function to start the Temporalio worker."""
+    
+    logging.basicConfig(level=logging.INFO)
     # Connect to Temporal server
     client = await Client.connect("localhost:7233")
     

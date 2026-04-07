@@ -4,9 +4,10 @@
 
 import asyncio
 import sys
-from datetime import timedelta
 from temporalio.client import Client,  WorkflowFailureError
-from temporalio.exceptions import ActivityError, ApplicationError
+from temporalio.common import WorkflowIDReusePolicy
+from temporalio.exceptions import WorkflowAlreadyStartedError
+
 
 # Import our workflow and dataclass
 from workflow import OrderProcessingWorkflow
@@ -45,6 +46,7 @@ async def main():
             order_info,
             id=workflow_id,
             task_queue=task_queue,
+            id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE
         )
         print(f"Workflow started successfully. Workflow ID: {workflow_id}")
         print("Waiting for workflow completion...")
@@ -53,6 +55,10 @@ async def main():
         workflow_result = await client.get_workflow_handle(workflow_id).result()
         print(f"Workflow completed with result: {workflow_result}")
 
+    except WorkflowAlreadyStartedError:
+        # Handle the duplicate ID case (e.g., log it, get the existing handle)
+        print("A workflow with this ID already exists.")
+    
     except WorkflowFailureError as e:
         if e.cause:
             print(f"Error: {e.cause}")

@@ -1,9 +1,10 @@
 from datetime import timedelta
 from temporalio import workflow
 from temporalio.common import RetryPolicy
-from temporalio.exceptions import ActivityError, ApplicationError
+from temporalio.exceptions import ActivityError
 from shared import OrderInfo
 from activities import reserve_inventory, release_inventory, charge_customer, pack_and_ship_package, notify_customer
+import logging
 
 @workflow.defn
 class OrderProcessingWorkflow:
@@ -35,6 +36,7 @@ class OrderProcessingWorkflow:
                     maximum_attempts=1,
                     )
                 )
+
         except ActivityError as e:
             # If charge fails, the workflow releases inventory and handles the error gracefully
             await workflow.execute_activity(
