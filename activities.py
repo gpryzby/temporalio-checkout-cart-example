@@ -26,6 +26,8 @@ async def charge_customer(order_info: OrderInfo) -> str:
     result = random.choice([True, False])
 
     if not result:
+        # Log a clean message for the activity failure
+        activity.logger.info("Charge denied for order %s", order_info.order_id)
         raise ApplicationError(
             "Order canceled.",
             type="ChargeDenied",

@@ -18,7 +18,7 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             reserve_inventory,
             order_info,
-            start_to_close_timeout=timedelta(seconds=3)
+            start_to_close_timeout=timedelta(seconds=10)
         )
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
@@ -29,7 +29,7 @@ class OrderProcessingWorkflow:
             await workflow.execute_activity(
                 charge_customer,
                 order_info,
-                start_to_close_timeout=timedelta(seconds=3),
+                start_to_close_timeout=timedelta(seconds=10),
                 # Configure no retries for this activity ONLY for the similation. This can be updated to try multiple times in a real application.
                 retry_policy=RetryPolicy(
                     maximum_attempts=1,
@@ -40,10 +40,10 @@ class OrderProcessingWorkflow:
             await workflow.execute_activity(
                 release_inventory,
                 order_info,
-                start_to_close_timeout=timedelta(seconds=3)
+                start_to_close_timeout=timedelta(seconds=10)
             )
-            # Re-raise the ApplicationError to fail the workflow but with cleaner error handling
-            raise ApplicationError(f"Order failed: {e.cause}")
+            # Re-raise the original error to fail the workflow
+            raise e.cause
 
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
         await workflow.sleep(timedelta(seconds=3))
@@ -52,7 +52,7 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             pack_and_ship_package,
             order_info,
-            start_to_close_timeout=timedelta(seconds=3)
+            start_to_close_timeout=timedelta(seconds=10)
         )
         
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
@@ -62,7 +62,7 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             notify_customer,
             order_info,
-            start_to_close_timeout=timedelta(seconds=3)
+            start_to_close_timeout=timedelta(seconds=10)
         )
         
         return f"Order {order_info.order_id} processed successfully"

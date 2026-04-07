@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """Starter script for the Temporalio order processing workflow."""
 
@@ -53,7 +54,8 @@ async def main():
         print(f"Workflow completed with result: {workflow_result}")
 
     except WorkflowFailureError as e:
-        print(f"Error: {e.cause}")
+        if e.cause:
+            print(f"Error: {e.cause}")
         sys.exit(1)
            
 
