@@ -27,7 +27,7 @@ async def charge_customer(order_info: OrderInfo) -> str:
 
     if not result:
         raise ApplicationError(
-            "Charge denied. Order canceled.",
+            "Order canceled.",
             type="ChargeDenied",
             non_retryable=True
         )
