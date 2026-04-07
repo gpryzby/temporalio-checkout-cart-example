@@ -12,6 +12,7 @@ class OrderProcessingWorkflow:
     @workflow.run
     async def run(self, order_info: OrderInfo) -> str:
         """Main workflow method that orchestrates the order processing steps."""
+        workflow.logger.info(f"OrderProcessing workflow invoked")
         
         # Step 1: Reserve inventory
         await workflow.execute_activity(
@@ -28,7 +29,7 @@ class OrderProcessingWorkflow:
             await workflow.execute_activity(
                 charge_customer,
                 order_info,
-                start_to_close_timeout=timedelta(seconds=10),
+                start_to_close_timeout=timedelta(seconds=3),
                 # Configure no retries for this activity ONLY for the similation. This can be updated to try multiple times in a real application.
                 retry_policy=RetryPolicy(
                     maximum_attempts=1,
@@ -51,7 +52,7 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             pack_and_ship_package,
             order_info,
-            start_to_close_timeout=timedelta(hours=4)
+            start_to_close_timeout=timedelta(seconds=3)
         )
         
         # Sleep for testing purposes to simulate a long-running workflow and demonstrate Temporal's durability
@@ -61,7 +62,7 @@ class OrderProcessingWorkflow:
         await workflow.execute_activity(
             notify_customer,
             order_info,
-            start_to_close_timeout=timedelta(minutes=5)
+            start_to_close_timeout=timedelta(seconds=3)
         )
         
         return f"Order {order_info.order_id} processed successfully"
