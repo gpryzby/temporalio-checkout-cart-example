@@ -30,32 +30,28 @@ The solution consists of the following components:
    - Creates order information with default values (in production the `order_id` would be used to lookup the information about the customer and payment infomation if saved or query the customer for payment)
    - Connects to Temporal server and starts the workflow
 
-## How to Run
+5. **Worker Script** (`worker.py`):
+   - Script to run the Temporalio worker
+   - Connects to Temporal server and registers the workflow and activities
 
-1. Ensure Temporal server is running on port 7233 
-2. Create your virtual environment:
+## How to Run with Docker
+
+1. Ensure Docker and Docker Compose are installed
+2. Start the Temporal server and worker:
    ```bash
-   python3 -m venv .venv
+   docker-compose up -d
    ```
-3. Activate your virtual environment:
+3. Start a workflow:
    ```bash
-   source .venv/bin/activate
+   docker-compose run --rm starter
    ```
-4. Install dependencies:
+4. To run with a specific order ID:
    ```bash
-   pip install -r requirements.txt (prepend uv if Debian based distros)
+   docker-compose run --rm starter python starter.py your-order-id-here
    ```
-5. Start docker instance:
-   ``` bash
-   docker run --rm -p 7233:7233 -p 8233:8233 temporalio/temporal:latest server start-dev --ip 0.0.0.0
-   ```
-6. Start worker:
-   ``` bash
-   python3 worker.py
-   ```
-7. Start the workflow:
+5. To stop all services:
    ```bash
-   python starter.py <order_id>
+   docker-compose down
    ```
 
 ## Key Features
@@ -65,6 +61,7 @@ The solution consists of the following components:
 - **Timeouts**: Proper timeouts configured for each activity to prevent hanging
 - **Error Handling**: Basic error handling in the starter script
 - **Modular Design**: Clear separation of concerns between data, workflow, and execution
+- **Docker Support**: Complete Docker setup for easy deployment
 
 ## File Structure
 
@@ -74,7 +71,8 @@ The solution consists of the following components:
 - `starter.py`: Script to start workflow execution
 - `worker.py`: Script to run the Temporalio worker
 - `requirements.txt`: Project dependencies
-- `test_workflow.py`: Test script to verify functionality
+- `Dockerfile`: Docker configuration for the application
+- `docker-compose.yml`: Docker Compose configuration for running Temporal server, worker, and starter
 
 ## Workflow Steps
 

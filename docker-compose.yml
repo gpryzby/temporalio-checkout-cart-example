@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  temporal-server:
+    image: temporalio/auto-setup:latest
+    container_name: temporal-server
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    environment:
+      - TEMPORAL_CLI_ADDRESS=127.0.0.1:7233
+    networks:
+      - temporal-network
+
+  worker:
+    build: .
+    container_name: temporal-worker
+    depends_on:
+      - temporal-server
+    environment:
+      - TEMPORAL_ADDRESS=127.0.0.1:7233
+    networks:
+      - temporal-network
+    command: python worker.py
+
+  starter:
+    build: .
+    container_name: temporal-starter
+    depends_on:
+      - temporal-server
+    environment:
+      - TEMPORAL_ADDRESS=127.0.0.1:7233
+    networks:
+      - temporal-network
+    command: python starter.py test-order-123
+    # You can override the order ID by passing it as an argument:
+    # docker-compose run --rm starter python starter.py <order_id>
+
+networks:
+  temporal-network:
+    driver: bridge
